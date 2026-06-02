@@ -1,0 +1,604 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Fair Split — receipt settlement engine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  /* =================================================================
+     fair split — single-file ui
+     palette: deep night + saffron + paper cream for the receipt card
+     ================================================================= */
+  :root {
+    --bg: #0e0d10;
+    --bg-elev: #16151a;
+    --ink: #ece8df;
+    --ink-dim: #98938a;
+    --line: #2a2731;
+    --accent: #e8a23a;          /* saffron */
+    --accent-dim: #b67c26;
+    --good: #6ec28b;
+    --bad: #e36b6b;
+    --paper: #f5efe2;           /* receipt card */
+    --paper-ink: #211e1a;
+    --paper-line: #d6cdb8;
+    --shadow: 0 30px 60px -25px rgba(0,0,0,.55), 0 8px 20px -8px rgba(0,0,0,.35);
+    --radius: 14px;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-size: 15px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    background-image:
+      radial-gradient(800px 600px at 80% -10%, rgba(232,162,58,.07), transparent 60%),
+      radial-gradient(700px 500px at -10% 90%, rgba(232,162,58,.04), transparent 60%);
+    background-attachment: fixed;
+    min-height: 100vh;
+  }
+
+  /* ----- layout ----- */
+  .shell { max-width: 980px; margin: 0 auto; padding: 56px 24px 96px; }
+
+  header.brand {
+    display: flex; align-items: baseline; gap: 14px;
+    margin-bottom: 48px;
+  }
+  .logo {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 28px;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+  }
+  .logo .dot { color: var(--accent); }
+  .tag {
+    font-size: 13px;
+    color: var(--ink-dim);
+    border-left: 1px solid var(--line);
+    padding-left: 14px;
+  }
+  .tag b { color: var(--accent); font-weight: 500; }
+
+  h1.title {
+    font-family: 'Fraunces', serif;
+    font-weight: 500;
+    font-size: clamp(36px, 6vw, 56px);
+    line-height: 1.05;
+    letter-spacing: -0.025em;
+    margin: 0 0 16px;
+    color: var(--ink);
+  }
+  h1.title em { font-style: italic; color: var(--accent); font-weight: 500; }
+  .lede {
+    font-size: 17px;
+    color: var(--ink-dim);
+    max-width: 56ch;
+    margin: 0 0 56px;
+  }
+
+  /* ----- inputs ----- */
+  .form {
+    display: grid;
+    gap: 24px;
+    grid-template-columns: 1fr;
+  }
+  @media (min-width: 760px) {
+    .form { grid-template-columns: 1fr 1fr; }
+  }
+
+  .field label {
+    display: block;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--ink-dim);
+    margin-bottom: 10px;
+  }
+  .field label .req { color: var(--accent); }
+
+  .drop {
+    position: relative;
+    border: 1px dashed var(--line);
+    border-radius: var(--radius);
+    background: var(--bg-elev);
+    aspect-ratio: 4 / 3;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    overflow: hidden;
+    transition: border-color .15s, background .15s;
+  }
+  .drop:hover, .drop.drag { border-color: var(--accent); background: #1a181f; }
+  .drop input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+  .drop .placeholder {
+    text-align: center;
+    color: var(--ink-dim);
+    font-size: 14px;
+    padding: 24px;
+  }
+  .drop .placeholder svg { display: block; margin: 0 auto 12px; opacity: .8; }
+  .drop .placeholder kbd {
+    font-family: inherit;
+    background: rgba(232,162,58,.12);
+    color: var(--accent);
+    padding: 2px 8px; border-radius: 4px;
+    font-size: 12px;
+  }
+  .drop img.preview {
+    width: 100%; height: 100%; object-fit: cover;
+  }
+  .drop .swap {
+    position: absolute; bottom: 10px; right: 10px;
+    background: rgba(14,13,16,.75); backdrop-filter: blur(6px);
+    color: var(--ink); border: 1px solid var(--line);
+    padding: 6px 12px; border-radius: 999px;
+    font-size: 12px; cursor: pointer;
+  }
+
+  textarea.desc {
+    width: 100%;
+    min-height: 240px;
+    resize: vertical;
+    background: var(--bg-elev);
+    color: var(--ink);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    line-height: 1.55;
+    transition: border-color .15s;
+  }
+  textarea.desc:focus { outline: none; border-color: var(--accent); }
+  textarea.desc::placeholder { color: #5b5660; font-style: italic; }
+
+  .hint {
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--ink-dim);
+  }
+
+  /* ----- submit ----- */
+  .actions {
+    margin-top: 32px;
+    display: flex; align-items: center; gap: 16px;
+  }
+  button.primary {
+    background: var(--accent);
+    color: #1a1206;
+    border: 0;
+    padding: 14px 28px;
+    border-radius: 999px;
+    font-weight: 600;
+    font-size: 15px;
+    letter-spacing: -0.005em;
+    cursor: pointer;
+    transition: transform .08s, background .15s, box-shadow .15s;
+    box-shadow: 0 8px 24px -8px rgba(232,162,58,.5);
+  }
+  button.primary:hover { background: #f0b04e; transform: translateY(-1px); }
+  button.primary:disabled { background: var(--line); color: var(--ink-dim); cursor: not-allowed; box-shadow: none; transform: none; }
+  .actions .status { font-size: 13px; color: var(--ink-dim); }
+  .actions .status.err { color: var(--bad); }
+
+  /* ----- result: paper receipt ----- */
+  .receipt {
+    margin-top: 64px;
+    background: var(--paper);
+    color: var(--paper-ink);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    /* deckle-edge bottom */
+    -webkit-mask-image: radial-gradient(8px 8px at 8px 100%, transparent 98%, #000 100%);
+    -webkit-mask-size: 16px 16px;
+    -webkit-mask-repeat: repeat-x;
+    -webkit-mask-position: 0 calc(100% + 0px);
+    -webkit-mask-composite: source-over;
+  }
+  .receipt-inner { padding: 36px 40px 44px; }
+  .receipt h2 {
+    font-family: 'Fraunces', serif;
+    font-weight: 500; font-size: 22px;
+    margin: 0 0 4px;
+    letter-spacing: -0.01em;
+  }
+  .receipt .sub {
+    font-size: 12px;
+    color: #6b665d;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 28px;
+  }
+
+  /* per-person table */
+  table.people {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 24px;
+    font-size: 14px;
+  }
+  table.people th, table.people td {
+    padding: 12px 8px;
+    text-align: right;
+    border-bottom: 1px dashed var(--paper-line);
+  }
+  table.people th {
+    font-weight: 500;
+    color: #6b665d;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    border-bottom: 1px solid var(--paper-ink);
+  }
+  table.people th:first-child, table.people td:first-child {
+    text-align: left;
+  }
+  table.people td.name {
+    font-family: 'Fraunces', serif;
+    font-size: 17px;
+    font-weight: 500;
+  }
+  table.people td.items {
+    font-size: 12px;
+    color: #6b665d;
+    max-width: 360px;
+    white-space: normal;
+  }
+  table.people td.total {
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    font-size: 15px;
+  }
+  table.people td.num { font-variant-numeric: tabular-nums; }
+
+  .grand {
+    display: flex; justify-content: space-between; align-items: baseline;
+    padding-top: 16px;
+    border-top: 2px solid var(--paper-ink);
+    margin-bottom: 24px;
+  }
+  .grand .label {
+    font-family: 'Fraunces', serif;
+    font-size: 18px;
+    font-weight: 500;
+  }
+  .grand .amt {
+    font-family: 'Fraunces', serif;
+    font-size: 28px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .recon {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 6px 12px; border-radius: 999px;
+    font-size: 12px; font-weight: 500;
+    margin-bottom: 24px;
+  }
+  .recon.ok { background: rgba(110,194,139,.18); color: #2d6b46; }
+  .recon.bad { background: rgba(227,107,107,.18); color: #8a2424; }
+
+  /* settle up */
+  .settle {
+    margin: 24px 0 28px;
+    padding: 20px 0;
+    border-top: 1px dashed var(--paper-line);
+    border-bottom: 1px dashed var(--paper-line);
+  }
+  .settle h3 {
+    font-family: 'Fraunces', serif;
+    font-size: 13px;
+    text-transform: uppercase; letter-spacing: 0.12em;
+    color: #6b665d;
+    margin: 0 0 14px;
+    font-weight: 500;
+  }
+  .settle ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+  .settle li {
+    display: flex; align-items: center; gap: 12px;
+    font-size: 15px;
+    font-variant-numeric: tabular-nums;
+  }
+  .settle .who { font-family: 'Fraunces', serif; font-weight: 500; min-width: 90px; }
+  .settle .arrow {
+    flex: 1; height: 1px; background: var(--paper-ink); position: relative; opacity: .35;
+  }
+  .settle .arrow::after {
+    content: ''; position: absolute; right: -1px; top: -3px;
+    width: 6px; height: 6px;
+    border-top: 1px solid var(--paper-ink);
+    border-right: 1px solid var(--paper-ink);
+    transform: rotate(45deg);
+  }
+  .settle .amt { font-weight: 600; color: var(--accent-dim); min-width: 90px; text-align: right; }
+
+  .settle .empty {
+    font-size: 13px; color: #6b665d; font-style: italic;
+  }
+
+  /* assumptions + flags */
+  .notes { display: grid; gap: 16px; }
+  .notebox h3 {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em;
+    margin: 0 0 8px; color: #6b665d; font-weight: 600;
+  }
+  .notebox ul { list-style: none; padding: 0; margin: 0; }
+  .notebox li {
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    margin-bottom: 6px;
+    line-height: 1.45;
+  }
+  .notebox.assumptions li { background: rgba(214,205,184,.55); color: #4d4839; }
+  .notebox.flags li {
+    background: rgba(227,107,107,.14);
+    color: #7a2424;
+    border-left: 3px solid var(--bad);
+  }
+  .notebox.flags li::before { content: '!'; font-weight: 700; margin-right: 8px; color: var(--bad); }
+
+  /* footer */
+  footer.foot {
+    margin-top: 48px;
+    color: var(--ink-dim);
+    font-size: 12px;
+    display: flex; justify-content: space-between; align-items: center;
+    border-top: 1px solid var(--line);
+    padding-top: 20px;
+  }
+  footer.foot a { color: var(--ink-dim); text-decoration: none; border-bottom: 1px dotted var(--line); }
+  footer.foot a:hover { color: var(--accent); border-color: var(--accent); }
+
+  /* spinner */
+  .spin {
+    display: inline-block; width: 14px; height: 14px;
+    border: 2px solid var(--ink-dim); border-top-color: transparent;
+    border-radius: 50%; animation: r 0.8s linear infinite;
+    vertical-align: -2px; margin-right: 6px;
+  }
+  @keyframes r { to { transform: rotate(360deg); } }
+
+  /* mobile */
+  @media (max-width: 600px) {
+    .shell { padding: 32px 18px 64px; }
+    .receipt-inner { padding: 24px 22px; }
+    table.people td.items { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <header class="brand">
+    <div class="logo">fair<span class="dot">.</span>split</div>
+    <div class="tag">receipt photo + who had what — <b>reconciled to the rupee</b></div>
+  </header>
+
+  <h1 class="title">Split the bill <em>fairly</em>,<br>not approximately.</h1>
+  <p class="lede">
+    Upload a restaurant bill. Tell us who had what. We extract line items with
+    Gemini, then do the math in Python so every paisa is accounted for —
+    and we flag anything that doesn't add up.
+  </p>
+
+  <!-- ============ form ============ -->
+  <div class="form">
+
+    <div class="field">
+      <label>Receipt photo <span class="req">*</span></label>
+      <div class="drop" id="drop">
+        <input type="file" id="file" accept="image/*">
+        <div class="placeholder" id="placeholder">
+          <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4">
+            <path d="M3 5a2 2 0 012-2h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5z"/>
+            <circle cx="9" cy="10" r="2"/>
+            <path d="M21 16l-4.5-4.5L8 19"/>
+          </svg>
+          Drop an image or <kbd>click</kbd> to upload<br>
+          <span style="font-size:11px;opacity:.7;">JPG, PNG, WebP — up to ~10MB</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Who had what <span class="req">*</span></label>
+      <textarea class="desc" id="desc" placeholder='e.g. "Ravi had the cappuccino and sandwich. Neha had the pasta and lime soda. Sameer had the brownie. Sameer paid."'></textarea>
+      <div class="hint">Name everyone. State who paid. Use real names — pronouns are guessed.</div>
+    </div>
+
+  </div>
+
+  <div class="actions">
+    <button class="primary" id="submit" disabled>Split the bill</button>
+    <div class="status" id="status"></div>
+  </div>
+
+  <!-- ============ result ============ -->
+  <div id="result"></div>
+
+  <footer class="foot">
+    <div>arithmetic in code · LLM only extracts · flags > silent fixes</div>
+    <a href="https://github.com/sahaj645/receipt-settlement-engine" target="_blank" rel="noopener">source on github →</a>
+  </footer>
+
+</div>
+
+<script>
+(() => {
+  const $ = (s) => document.querySelector(s);
+  const drop = $('#drop'), file = $('#file'), placeholder = $('#placeholder');
+  const desc = $('#desc'), submit = $('#submit'), status = $('#status'), result = $('#result');
+
+  let imageB64 = null;
+
+  // ---------- file handling ----------
+  function showPreview(dataURL, b64Only) {
+    imageB64 = b64Only;
+    drop.innerHTML = '';
+    const img = document.createElement('img');
+    img.className = 'preview';
+    img.src = dataURL;
+    drop.appendChild(img);
+    const swap = document.createElement('button');
+    swap.className = 'swap'; swap.type = 'button'; swap.textContent = 'change';
+    swap.onclick = (e) => { e.stopPropagation(); file.click(); };
+    drop.appendChild(swap);
+    // keep the hidden input so clicks still open the picker
+    const reInput = document.createElement('input');
+    reInput.type = 'file'; reInput.id = 'file'; reInput.accept = 'image/*';
+    reInput.style.cssText = 'position:absolute;inset:0;opacity:0;cursor:pointer';
+    reInput.addEventListener('change', onPick);
+    drop.appendChild(reInput);
+    refreshSubmit();
+  }
+
+  function onPick(ev) {
+    const f = ev.target.files && ev.target.files[0];
+    if (!f) return;
+    if (!f.type.startsWith('image/')) { setStatus('That doesn\'t look like an image.', true); return; }
+    const r = new FileReader();
+    r.onload = () => {
+      const dataURL = r.result;
+      const b64 = dataURL.replace(/^data:[^,]+,/, ''); // strip data-URI prefix
+      showPreview(dataURL, b64);
+    };
+    r.readAsDataURL(f);
+  }
+  file.addEventListener('change', onPick);
+
+  // drag & drop
+  ['dragenter','dragover'].forEach(e => drop.addEventListener(e, ev => { ev.preventDefault(); drop.classList.add('drag'); }));
+  ['dragleave','drop'].forEach(e => drop.addEventListener(e, ev => { ev.preventDefault(); drop.classList.remove('drag'); }));
+  drop.addEventListener('drop', ev => {
+    if (ev.dataTransfer && ev.dataTransfer.files && ev.dataTransfer.files[0]) {
+      const dt = new DataTransfer();
+      dt.items.add(ev.dataTransfer.files[0]);
+      file.files = dt.files;
+      onPick({ target: file });
+    }
+  });
+
+  desc.addEventListener('input', refreshSubmit);
+  function refreshSubmit() {
+    submit.disabled = !(imageB64 && desc.value.trim().length > 0);
+  }
+  function setStatus(msg, isErr = false) {
+    status.textContent = msg;
+    status.className = 'status' + (isErr ? ' err' : '');
+  }
+
+  // ---------- submit ----------
+  submit.addEventListener('click', async () => {
+    submit.disabled = true;
+    setStatus('');
+    result.innerHTML = '';
+    setStatus(`Asking Gemini to read your bill…`);
+    const t0 = performance.now();
+    try {
+      const res = await fetch('/split', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ receipt_base64: imageB64, description: desc.value }),
+      });
+      const data = await res.json();
+      const ms = Math.round(performance.now() - t0);
+      setStatus(`Done in ${(ms/1000).toFixed(1)}s.`);
+      render(data);
+    } catch (e) {
+      setStatus('Network error: ' + e.message, true);
+    } finally {
+      refreshSubmit();
+    }
+  });
+
+  // ---------- render ----------
+  function esc(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+  function rupee(n) { return '₹' + Number(n).toLocaleString('en-IN'); }
+
+  function render(d) {
+    if (!d) return;
+    const ok = d.reconciliation && d.reconciliation.matches_bill;
+    const recon = ok
+      ? `<div class="recon ok">✓ matches bill — sum ${rupee(d.reconciliation.sum_of_person_totals)}</div>`
+      : `<div class="recon bad">✗ does not reconcile — sum ${rupee(d.reconciliation && d.reconciliation.sum_of_person_totals || 0)} vs ${rupee(d.grand_total)}</div>`;
+
+    const rows = (d.per_person || []).map(p => `
+      <tr>
+        <td class="name">${esc(p.name)}</td>
+        <td class="items">${(p.items || []).map(esc).join(' · ') || '<em>—</em>'}</td>
+        <td class="num">${rupee(p.subtotal)}</td>
+        <td class="num">${rupee(p.service_share)}</td>
+        <td class="num">${rupee(p.tax_share)}</td>
+        <td class="num">${p.discount_share < 0 ? '−' + rupee(Math.abs(p.discount_share)) : rupee(p.discount_share)}</td>
+        <td class="total">${rupee(p.total)}</td>
+      </tr>`).join('');
+
+    const settleRows = (d.settle_up || []).length
+      ? `<ul>${d.settle_up.map(s => `
+          <li>
+            <span class="who">${esc(s.from)}</span>
+            <span class="arrow"></span>
+            <span class="who" style="text-align:right;">${esc(s.to)}</span>
+            <span class="amt">${rupee(s.amount)}</span>
+          </li>`).join('')}</ul>`
+      : `<div class="empty">No settle-up — ${d.paid_by ? 'everyone already even.' : 'payer unknown.'}</div>`;
+
+    const notes = [];
+    if ((d.assumptions || []).length) notes.push(`
+      <div class="notebox assumptions">
+        <h3>Assumptions</h3>
+        <ul>${d.assumptions.map(a => `<li>${esc(a)}</li>`).join('')}</ul>
+      </div>`);
+    if ((d.flags || []).length) notes.push(`
+      <div class="notebox flags">
+        <h3>Flags</h3>
+        <ul>${d.flags.map(f => `<li>${esc(f)}</li>`).join('')}</ul>
+      </div>`);
+
+    result.innerHTML = `
+      <div class="receipt">
+        <div class="receipt-inner">
+          <h2>Settlement</h2>
+          <div class="sub">${d.paid_by ? 'Paid by ' + esc(d.paid_by) : 'Payer not stated'}</div>
+          ${recon}
+
+          <table class="people">
+            <thead>
+              <tr>
+                <th>Who</th><th>Items</th>
+                <th>Subtotal</th><th>Service</th><th>Tax</th><th>Disc.</th><th>Total</th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+
+          <div class="grand">
+            <span class="label">Grand total</span>
+            <span class="amt">${rupee(d.grand_total)}</span>
+          </div>
+
+          <div class="settle">
+            <h3>Settle up</h3>
+            ${settleRows}
+          </div>
+
+          <div class="notes">${notes.join('')}</div>
+        </div>
+      </div>`;
+
+    result.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+})();
+</script>
+</body>
+</html>
