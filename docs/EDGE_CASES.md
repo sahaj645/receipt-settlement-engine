@@ -1,0 +1,38 @@
+# Edge cases
+
+The four sample receipts (R1–R4) are a starting point. Real bills are
+messier. This is the matrix I probed beyond the samples, with the
+behavior the system is supposed to exhibit and whether I verified it.
+
+| #  | Case                                                                  | Input shape                                                              | Behavior                                                                                                  | Verified |
+| -- | --------------------------------------------------------------------- | ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------- | -------- |
+| 1  | Bill has no service charge                                            | `printed_service: null`                                                  | Splitter treats pool as 0; per-person `service_share = 0`.                                                | Y        |
+| 2  | Printed total ≠ line items sum                                        | `sum(line_totals) - printed_subtotal > ₹1`                               | Reconciler emits "Line items sum to X but printed subtotal is Y — gap of Z unexplained".                  | Y        |
+| 3  | Description names an item not on the bill                             | Description: "Ravi had the cheesecake"; no cheesecake line               | Reconciler emits "Description mentions ['cheesecake'] but no matching item on the bill".                  | Y        |
+| 4  | "Rest of us" / "everyone else" with thin context                      | Phrase appears in description                                            | Reconciler emits assumption naming the diners that phrase resolves to. Extractor instructed to resolve it.| Y        |
+| 5  | Shared item across a subset (not everyone)                            | `assignments[i].people = ["A", "B"]` where `people = ["A","B","C"]`      | Item split equally only among A and B; C pays nothing for that item.                                      | Y        |
+| 6  | Quantity 3 line split among 2 people                                  | `qty=3, line_total=600`, assignment people=["P","Q"]                     | Each owes 300 (line_total ÷ headcount, not per-unit cost).                                                | Y        |
+| 7  | Tip / round-off line on the bill                                      | `printed_total` already includes the rounding                            | Splitter trusts `printed_total` when present; payer absorbs the ₹0.10–₹0.40 round-off as an assumption.   | Y        |
+| 8  | Multiple payers ambiguity ("Anjali and I split the bill")             | Extractor sets `payer=null` and adds an `ambiguities` note               | Reconciler emits "Payer not stated"; `settle_up` is empty.                                                | Y        |
+| 9  | Blurry / partially unreadable image                                   | Model emits `ambiguities=["unit price for line 3 illegible"]`            | Reconciler prefixes the note with "Extractor noted:" and surfaces it in `flags`.                          | Y        |
+| 10 | Non-English receipt (e.g. Hindi item names)                           | Gemini transcribes as-is; assignment matches partial overlap             | Splitter doesn't care about script; flagged if no overlap between description and item text.              | Partial  |
+| 11 | Currency other than ₹                                                 | Numbers extracted regardless of symbol                                   | Math is unit-less; UI renders "₹" as a label only. *Future: parse currency symbol and pass through.*      | Partial  |
+| 12 | Zero items on the bill                                                | `items=[]`                                                               | Splitter returns empty `per_person`; reconciler emits "No diners" + "no printed grand total" flags.       | Y        |
+| 13 | Negative discount larger than subtotal                                | `printed_discount > printed_subtotal`                                    | Splitter still runs; reconciler flags any negative person totals individually.                            | Y        |
+| 14 | Single-person bill                                                    | `people=["Solo"], payer="Solo"`                                          | One row in `per_person`, empty `settle_up` (nobody to pay).                                               | Y        |
+| 15 | Payer not in the diner list                                           | `payer="Z"`, `people=["A","B"]`                                          | Splitter treats payer as unknown; reconciler emits "Stated payer 'Z' is not in the diner list".           | Y        |
+| 16 | Duplicate diner names (Aman vs aman)                                  | Case-only duplicates in `people`                                         | Splitter dedupes preserving order; reconciler flags the dupes for the user to confirm.                    | Y        |
+| 17 | Item assigned to an unknown person                                    | `assignment.people = ["Ghost"]`, Ghost not in `people`                   | Splitter ignores the ghost, flags the item; if no eaters remain, item is skipped with a flag.             | Y        |
+| 18 | Paise drift on three-way share of an odd number                       | `100 ÷ 3 = 33.33 + 33.33 + 33.34`                                        | First eater absorbs the line residual so the line itself sums exactly to 100.                             | Y        |
+| 19 | Per-person rounded totals don't sum to grand total                    | Pre-rounding totals leave ±₹1–₹2 residual                                | Payer absorbs the residual; assumption note states "X absorbs +N rupee rounding residual".                | Y        |
+| 20 | Gemini returns malformed JSON                                         | First response is unparseable                                            | Extractor retries once with explicit "your last output wasn't valid JSON" reminder.                       | Y        |
+| 21 | Gemini API failure (network, quota)                                   | SDK raises                                                               | Global exception handler returns 200 with `flags=["error: ..."]` so the UI renders the error inline.      | Y        |
+| 22 | Bad base64 in `receipt_base64`                                        | Not valid base64                                                         | Pydantic accepts (min length only); extractor raises `ExtractionError`; UI shows clean error message.     | Y        |
+| 23 | Data-URI prefix accidentally included (`data:image/png;base64,...`)   | Frontend should strip but server is lenient                              | `SplitRequest` validator strips it server-side too.                                                       | Y        |
+| 24 | Description has paraphrased dish name (e.g. "pasta" for "Penne...")   | `Penne Arrabiata` on bill, "pasta" in description                        | Reconciler has a small synonym map so common paraphrases don't false-flag.                                | Y        |
+
+## Things explicitly out of scope
+
+- **Per-item discounts** (e.g. "20% off pastas only"). The brief specifies bill-level discount allocation; per-item discounts would need a new assignment-style field.
+- **Multiple currencies in one bill.** Real-world but rare; out of scope.
+- **Auto-detection of who paid from the receipt itself.** The brief says the payer is named in the description; if it isn't, we flag.
