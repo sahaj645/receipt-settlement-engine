@@ -1,6 +1,6 @@
 """Cross-check the extraction and split, surface anything that smells off.
 
-The reconciler is pure — input goes in, flags come out. It runs *after*
+The reconciler is pure - input goes in, flags come out. It runs after
 the splitter so it can compare:
 
 * sum(line_totals)        vs printed_subtotal
@@ -10,7 +10,7 @@ the splitter so it can compare:
 * people-list sanity (empty, duplicates, etc.)
 * negative or zero subtotals
 
-The brief is explicit: **flag discrepancies, don't silently fix them.**
+The brief is explicit: flag discrepancies, don't silently fix them.
 This module is the enforcer of that rule.
 """
 
@@ -21,24 +21,15 @@ from decimal import Decimal
 
 from app.schemas import ExtractedBill, SplitResult
 
-# Tolerance for "close enough" Decimal comparisons. ₹1 rounding tolerance
-# is generous; the brief's R3 example has a +0.10 round-off line.
 _RUPEE_TOLERANCE = Decimal("1.00")
 
 
-# =====================================================================
-# Public entry
-# =====================================================================
 def reconcile(
     extracted: ExtractedBill,
     split: SplitResult,
     description: str,
 ) -> tuple[list[str], list[str]]:
-    """Return ``(new_flags, new_assumptions)`` to merge into the response.
-
-    Does not mutate ``split``. The caller is responsible for appending
-    the returned lists to ``split.flags`` and ``split.assumptions``.
-    """
+    """Return (new_flags, new_assumptions) to merge into the response."""
     flags: list[str] = []
     assumptions: list[str] = []
 
@@ -54,9 +45,6 @@ def reconcile(
     return flags, assumptions
 
 
-# =====================================================================
-# Individual checks
-# =====================================================================
 def _check_line_items_sum(extracted: ExtractedBill) -> list[str]:
     """sum(line_totals) should match the printed subtotal."""
     if extracted.printed_subtotal is None or not extracted.items:
@@ -67,21 +55,21 @@ def _check_line_items_sum(extracted: ExtractedBill) -> list[str]:
     if abs(diff) > _RUPEE_TOLERANCE:
         return [
             f"Line items sum to {line_sum:.2f} but printed subtotal is "
-            f"{printed:.2f} — gap of {diff:+.2f} unexplained."
+            f"{printed:.2f} - gap of {diff:+.2f} unexplained."
         ]
     return []
 
 
 def _check_grand_total(extracted: ExtractedBill, split: SplitResult) -> list[str]:
-    """Computed grand total should be within ₹1 of the printed grand total."""
+    """Computed grand total should be within Rs.1 of the printed grand total."""
     if extracted.printed_total is None:
         return ["No printed grand total found on the bill; using computed total."]
     printed = Decimal(str(extracted.printed_total))
     diff = Decimal(split.grand_total) - printed
     if abs(diff) > _RUPEE_TOLERANCE:
         return [
-            f"Computed grand total ₹{split.grand_total} differs from printed "
-            f"₹{printed} by {diff:+}; flagged for review."
+            f"Computed grand total Rs.{split.grand_total} differs from printed "
+            f"Rs.{printed} by {diff:+}; flagged for review."
         ]
     return []
 
@@ -90,7 +78,7 @@ def _check_payer(extracted: ExtractedBill) -> list[str]:
     """Payer must be explicitly stated and present in the people list."""
     if extracted.payer is None:
         return [
-            "Payer not stated in description. Cannot generate settle-up — "
+            "Payer not stated in description. Cannot generate settle-up - "
             "please re-submit with 'X paid the bill'."
         ]
     if extracted.people and extracted.payer not in extracted.people:
@@ -125,37 +113,42 @@ def _check_subtotals(split: SplitResult) -> list[str]:
     flags: list[str] = []
     for p in split.per_person:
         if p.subtotal < 0:
-            flags.append(f"Negative subtotal computed for {p.name}: ₹{p.subtotal}.")
+            flags.append(f"Negative subtotal computed for {p.name}: Rs.{p.subtotal}.")
         if p.total < 0:
             flags.append(
-                f"Negative total for {p.name}: ₹{p.total} "
-                "(discount exceeds their share — verify the discount line)."
+                f"Negative total for {p.name}: Rs.{p.total} "
+                "(discount exceeds their share - verify the discount line)."
             )
     return flags
 
 
-# --- description vs bill cross-checks ----------------------------------
+_SYNONYMS = {
+    "pasta": {"penne", "spaghetti", "fettuccine", "fusilli", "macaroni", "lasagna", "ravioli", "arrabiata"},
+    "coffee": {"cappuccino", "latte", "espresso", "americano", "mocha"},
+    "drinks": {"mojito", "soda", "juice", "beer", "wine", "cocktail"},
+    "bread": {"focaccia", "naan", "roti", "paratha", "garlic"},
+    "rice": {"biryani", "pulao", "fried"},
+}
+
+
 def _check_description_items(
     extracted: ExtractedBill, description: str
 ) -> list[str]:
-    """Catch items mentioned in the description that aren't on the bill.
-
-    We use a simple word-overlap check, not full NLP. False positives are
-    fine here — over-flagging is safer than silently dropping items.
-    """
+    """Catch items mentioned in the description that aren't on the bill."""
     if not description or not extracted.items:
         return []
 
-    # Lowercased food-token list from bill: split on whitespace, drop short tokens.
     bill_tokens: set[str] = set()
     for item in extracted.items:
         for tok in re.findall(r"[A-Za-z]+", item.name.lower()):
             if len(tok) >= 4:
                 bill_tokens.add(tok)
+                for canon, alts in _SYNONYMS.items():
+                    if tok in alts:
+                        bill_tokens.add(canon)
+                    if tok == canon:
+                        bill_tokens.update(alts)
 
-    # Common food/drink words a person might name. Conservative list — only
-    # flags when a clearly-noun food word in the description has no overlap
-    # with the bill text at all.
     suspect_words = re.findall(
         r"\b(pasta|pizza|biryani|sandwich|burger|salad|cheesecake|brownie|"
         r"cappuccino|latte|mojito|beer|wine|soda|juice|coffee|tea|garlic|"
@@ -190,8 +183,6 @@ def _check_ambiguity_phrases(
     lowered = description.lower()
     hits = [p for p in phrases if p in lowered]
     if hits and extracted.people:
-        # The extractor should have resolved these; if it didn't (no
-        # ambiguity entry exists), at least state our assumption.
         return [
             f"Detected vague phrasing {hits}; assumed it refers to all "
             f"diners listed: {extracted.people}."
