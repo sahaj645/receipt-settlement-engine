@@ -24,8 +24,8 @@ class Settings(BaseSettings):
     # --- Gemini ---------------------------------------------------------
     gemini_api_key: str = Field(default="", description="Google AI Studio API key.")
     gemini_model: str = Field(
-        default="gemini-2.0-flash-exp",
-        description="Gemini model id. Free tier: gemini-2.0-flash-exp.",
+        default="gemini-2.5-flash",
+        description="Gemini model id. Current free-tier multimodal model (Nov 2025+).",
     )
     gemini_timeout_s: int = Field(default=45, description="Per-request timeout.")
 
