@@ -44,27 +44,34 @@ class TestSampleReceipts:
         assert ("Neha", "Sameer") in owed
         assert all(s.to == "Sameer" for s in result.settle_up)
 
-    def test_R2_taj_thali(self, r2):
+    def test_R2_tamarind_kitchen(self, r2):
         bill, _ = r2
         result = compute_split(bill)
-        assert result.grand_total == 1455
+        assert result.grand_total == 1345
         assert result.reconciliation.matches_bill is True
-        for name in ("Arjun", "Kabir", "Priya"):
-            p = self._person(result, name)
-            assert p.subtotal > 0
+        # Four diners, mostly shared. Priya and Karan get the extra
+        # Gulab Jamun share so their subtotals should be the highest.
+        priya = self._person(result, "Priya")
+        karan = self._person(result, "Karan")
+        aman = self._person(result, "Aman")
+        sara = self._person(result, "Sara")
+        assert priya.subtotal > aman.subtotal
+        assert karan.subtotal > sara.subtotal
+        assert priya.subtotal == karan.subtotal
+        assert aman.subtotal == sara.subtotal
 
-    def test_R3_pizza_bar(self, r3):
+    def test_R3_daily_grind(self, r3):
         bill, _ = r3
         result = compute_split(bill)
-        assert result.grand_total == 1830
+        assert result.grand_total == 1720
         assert result.reconciliation.matches_bill is True
         meera = self._person(result, "Meera")
         ishaan = self._person(result, "Ishaan")
         rohit = self._person(result, "Rohit")
+        # Meera only drank a mojito, no beer -> should owe less
         assert meera.total < ishaan.total
         assert meera.total < rohit.total
-        # Ishaan and Rohit ate identical items, so subtotals match within
-        # a 1₹ paise-rounding drift on shared lines.
+        # Ishaan and Rohit ate identical items within paise-rounding tolerance
         assert abs(ishaan.subtotal - rohit.subtotal) <= 1
 
     def test_R4_spice_route_with_discount(self, r4):

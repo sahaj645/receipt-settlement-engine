@@ -21,45 +21,49 @@
       {"item_index": 4, "people": ["Sameer"]}
     ],
     "payer": "Sameer",
-    "description": "Three of us. Ravi had the cappuccino and sandwich. Neha had the pasta and lime soda. Sameer had the brownie. Sameer paid."
+    "description": "Three of us - Ravi, Neha, Sameer. Ravi had the cappuccino and the sandwich. Neha had the pasta and the lime soda. Sameer had the brownie. Sameer paid."
   },
 
-  "R2_taj_thali": {
+  "R2_tamarind_kitchen": {
     "items": [
-      {"name": "Veg Thali",     "qty": 2, "unit_price": "260", "line_total": "520"},
-      {"name": "Paneer Tikka",  "qty": 1, "unit_price": "320", "line_total": "320"},
-      {"name": "Garlic Naan",   "qty": 4, "unit_price": "60",  "line_total": "240"},
-      {"name": "Mango Lassi",   "qty": 2, "unit_price": "120", "line_total": "240"}
+      {"name": "Paneer Butter Masala", "qty": 1,    "unit_price": "320", "line_total": "320"},
+      {"name": "Dal Makhani",          "qty": 1,    "unit_price": "260", "line_total": "260"},
+      {"name": "Butter Naan",          "qty": 4,    "unit_price": "60",  "line_total": "240"},
+      {"name": "Jeera Rice",           "qty": 1,    "unit_price": "180", "line_total": "180"},
+      {"name": "Gulab Jamun",          "qty": 2,    "unit_price": "60",  "line_total": "120"},
+      {"name": "Masala Papad",         "qty": 2,    "unit_price": "50",  "line_total": "100"}
     ],
-    "printed_subtotal": "1320",
-    "printed_service":  "66",
-    "printed_tax":      "69.30",
+    "printed_subtotal": "1220",
+    "printed_service":  "61",
+    "printed_tax":      "64.05",
     "printed_discount": null,
-    "printed_total":    "1455",
-    "people": ["Arjun", "Kabir", "Priya"],
+    "printed_total":    "1345",
+    "people": ["Aman", "Priya", "Karan", "Sara"],
     "assignments": [
-      {"item_index": 0, "people": ["Arjun", "Kabir"]},
+      {"item_index": 0, "shared_by_all": true},
       {"item_index": 1, "shared_by_all": true},
       {"item_index": 2, "shared_by_all": true},
-      {"item_index": 3, "people": ["Priya", "Arjun"]}
+      {"item_index": 3, "shared_by_all": true},
+      {"item_index": 4, "people": ["Priya", "Karan"]},
+      {"item_index": 5, "shared_by_all": true}
     ],
     "payer": "Priya",
-    "description": "Arjun and Kabir each had a veg thali. Paneer tikka and naans were shared by all three. Priya and Arjun had a lassi each. Priya paid."
+    "description": "Four of us: Aman, Priya, Karan, Sara. The Gulab Jamun was shared just by Priya and Karan. Everything else was common to all four. Priya paid."
   },
 
-  "R3_pizza_bar": {
+  "R3_daily_grind": {
     "items": [
-      {"name": "Margherita Pizza", "qty": 1, "unit_price": "480", "line_total": "480"},
-      {"name": "Penne Arrabiata",  "qty": 1, "unit_price": "320", "line_total": "320"},
-      {"name": "Garlic Bread",     "qty": 1, "unit_price": "180", "line_total": "180"},
+      {"name": "Margherita Pizza", "qty": 1, "unit_price": "380", "line_total": "380"},
+      {"name": "Arrabiata Pasta",  "qty": 1, "unit_price": "340", "line_total": "340"},
+      {"name": "Garlic Bread",     "qty": 1, "unit_price": "160", "line_total": "160"},
       {"name": "Craft Beer",       "qty": 2, "unit_price": "250", "line_total": "500"},
       {"name": "Virgin Mojito",    "qty": 1, "unit_price": "180", "line_total": "180"}
     ],
-    "printed_subtotal": "1660",
-    "printed_service":  "83",
-    "printed_tax":      "87.15",
+    "printed_subtotal": "1560",
+    "printed_service":  "78",
+    "printed_tax":      "81.90",
     "printed_discount": null,
-    "printed_total":    "1830",
+    "printed_total":    "1720",
     "people": ["Ishaan", "Meera", "Rohit"],
     "assignments": [
       {"item_index": 0, "shared_by_all": true},

@@ -50,12 +50,12 @@ def r1(fixtures):
 
 @pytest.fixture()
 def r2(fixtures):
-    return _build(fixtures["R2_taj_thali"])
+    return _build(fixtures["R2_tamarind_kitchen"])
 
 
 @pytest.fixture()
 def r3(fixtures):
-    return _build(fixtures["R3_pizza_bar"])
+    return _build(fixtures["R3_daily_grind"])
 
 
 @pytest.fixture()

@@ -4,7 +4,8 @@ A production-grade API + minimal frontend that takes a restaurant bill photo and
 
 Built for the EpiFi GenAI Product Builder internship assignment.
 
-> Live URL: _TBD — fill in after Render deploy_
+> Live URL: **https://receipt-settlement-engine.onrender.com**
+> Healthcheck: [`/healthz`](https://receipt-settlement-engine.onrender.com/healthz)
 
 ## What it does
 
@@ -65,7 +66,7 @@ Response:
 ### curl example
 
 ```bash
-curl -X POST https://<your-render-url>/split \
+curl -X POST https://receipt-settlement-engine.onrender.com/split \
   -H "Content-Type: application/json" \
   -d "{\"receipt_base64\":\"$(base64 -w0 sample.jpg)\",\"description\":\"Ravi had the cappuccino and sandwich. Neha had the pasta. Sameer paid.\"}"
 ```
