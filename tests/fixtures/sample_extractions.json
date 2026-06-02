@@ -1,0 +1,99 @@
+{
+  "R1_brew_and_bite": {
+    "items": [
+      {"name": "Cappuccino",                "qty": 1, "unit_price": "180", "line_total": "180"},
+      {"name": "Grilled Chicken Sandwich",  "qty": 1, "unit_price": "260", "line_total": "260"},
+      {"name": "Penne Arrabiata",           "qty": 1, "unit_price": "320", "line_total": "320"},
+      {"name": "Fresh Lime Soda",           "qty": 1, "unit_price": "120", "line_total": "120"},
+      {"name": "Brownie",                   "qty": 1, "unit_price": "160", "line_total": "160"}
+    ],
+    "printed_subtotal": "1040",
+    "printed_service":  "52",
+    "printed_tax":      "54.60",
+    "printed_discount": null,
+    "printed_total":    "1147",
+    "people": ["Ravi", "Neha", "Sameer"],
+    "assignments": [
+      {"item_index": 0, "people": ["Ravi"]},
+      {"item_index": 1, "people": ["Ravi"]},
+      {"item_index": 2, "people": ["Neha"]},
+      {"item_index": 3, "people": ["Neha"]},
+      {"item_index": 4, "people": ["Sameer"]}
+    ],
+    "payer": "Sameer",
+    "description": "Three of us. Ravi had the cappuccino and sandwich. Neha had the pasta and lime soda. Sameer had the brownie. Sameer paid."
+  },
+
+  "R2_taj_thali": {
+    "items": [
+      {"name": "Veg Thali",     "qty": 2, "unit_price": "260", "line_total": "520"},
+      {"name": "Paneer Tikka",  "qty": 1, "unit_price": "320", "line_total": "320"},
+      {"name": "Garlic Naan",   "qty": 4, "unit_price": "60",  "line_total": "240"},
+      {"name": "Mango Lassi",   "qty": 2, "unit_price": "120", "line_total": "240"}
+    ],
+    "printed_subtotal": "1320",
+    "printed_service":  "66",
+    "printed_tax":      "69.30",
+    "printed_discount": null,
+    "printed_total":    "1455",
+    "people": ["Arjun", "Kabir", "Priya"],
+    "assignments": [
+      {"item_index": 0, "people": ["Arjun", "Kabir"]},
+      {"item_index": 1, "shared_by_all": true},
+      {"item_index": 2, "shared_by_all": true},
+      {"item_index": 3, "people": ["Priya", "Arjun"]}
+    ],
+    "payer": "Priya",
+    "description": "Arjun and Kabir each had a veg thali. Paneer tikka and naans were shared by all three. Priya and Arjun had a lassi each. Priya paid."
+  },
+
+  "R3_pizza_bar": {
+    "items": [
+      {"name": "Margherita Pizza", "qty": 1, "unit_price": "480", "line_total": "480"},
+      {"name": "Penne Arrabiata",  "qty": 1, "unit_price": "320", "line_total": "320"},
+      {"name": "Garlic Bread",     "qty": 1, "unit_price": "180", "line_total": "180"},
+      {"name": "Craft Beer",       "qty": 2, "unit_price": "250", "line_total": "500"},
+      {"name": "Virgin Mojito",    "qty": 1, "unit_price": "180", "line_total": "180"}
+    ],
+    "printed_subtotal": "1660",
+    "printed_service":  "83",
+    "printed_tax":      "87.15",
+    "printed_discount": null,
+    "printed_total":    "1830",
+    "people": ["Ishaan", "Meera", "Rohit"],
+    "assignments": [
+      {"item_index": 0, "shared_by_all": true},
+      {"item_index": 1, "shared_by_all": true},
+      {"item_index": 2, "shared_by_all": true},
+      {"item_index": 3, "people": ["Ishaan", "Rohit"]},
+      {"item_index": 4, "people": ["Meera"]}
+    ],
+    "payer": "Rohit",
+    "description": "Ishaan, Meera, Rohit. Pizza, pasta and garlic bread shared equally by all three. The two beers were Ishaan and Rohit only. The mojito was Meera's. Rohit paid."
+  },
+
+  "R4_spice_route": {
+    "items": [
+      {"name": "Chicken Biryani",     "qty": 2, "unit_price": "280", "line_total": "560"},
+      {"name": "Veg Biryani",         "qty": 1, "unit_price": "240", "line_total": "240"},
+      {"name": "Mutton Rogan Josh",   "qty": 1, "unit_price": "420", "line_total": "420"},
+      {"name": "Raita",               "qty": 2, "unit_price": "60",  "line_total": "120"},
+      {"name": "Soft Drinks",         "qty": 3, "unit_price": "60",  "line_total": "180"}
+    ],
+    "printed_subtotal": "1520",
+    "printed_service":  "76",
+    "printed_tax":      "68.40",
+    "printed_discount": "228",
+    "printed_total":    "1436",
+    "people": ["Dev", "Nikhil", "Anjali", "Farah"],
+    "assignments": [
+      {"item_index": 0, "people": ["Dev", "Nikhil"]},
+      {"item_index": 1, "people": ["Anjali"]},
+      {"item_index": 2, "people": ["Farah"]},
+      {"item_index": 3, "shared_by_all": true},
+      {"item_index": 4, "shared_by_all": true}
+    ],
+    "payer": "Anjali",
+    "description": "Dev and Nikhil each had a chicken biryani. Anjali had the veg biryani. Farah had the rogan josh. The raita and soft drinks were common to all four. We used a 15% off coupon. Anjali paid."
+  }
+}

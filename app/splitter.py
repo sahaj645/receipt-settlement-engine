@@ -218,9 +218,19 @@ def compute_split(extracted: ExtractedBill) -> SplitResult:
             )
         rounded[absorber] += diff
 
-    # ---------- 6. round component shares (cosmetic; informational only) ----------
+    # ---------- 6. round component shares; balance displayed subtotal column ----------
     def _round_int(d: Decimal) -> int:
         return int(d.quantize(Decimal("1"), rounding=ROUND_HALF_UP))
+
+    # Round subtotals individually, then nudge to make them sum to the
+    # printed subtotal (or our subtotal_total) — same residual-absorption
+    # trick we used for totals, so the displayed column actually adds up.
+    sub_int: dict[str, int] = {p: _round_int(subtotals[p]) for p in people}
+    sub_target = _round_int(subtotal_total)
+    sub_diff = sub_target - sum(sub_int.values())
+    if sub_diff != 0 and sub_int:
+        absorber = payer or max(sub_int, key=lambda p: subtotals[p])
+        sub_int[absorber] += sub_diff
 
     per_person: list[PersonSplit] = []
     for p in people:
@@ -228,7 +238,7 @@ def compute_split(extracted: ExtractedBill) -> SplitResult:
             PersonSplit(
                 name=p,
                 items=person_items[p],
-                subtotal=_round_int(subtotals[p]),
+                subtotal=sub_int[p],
                 tax_share=_round_int(tax_shares.get(p, _ZERO)),
                 service_share=_round_int(service_shares.get(p, _ZERO)),
                 discount_share=-_round_int(discount_shares.get(p, _ZERO)),
@@ -254,6 +264,11 @@ def compute_split(extracted: ExtractedBill) -> SplitResult:
         assumptions=assumptions,
         flags=flags,
     )
+
+
+# =====================================================================
+# Settle-up
+# =====================================================================
 
 
 # =====================================================================
