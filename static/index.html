@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Fair Split</title>
-<link rel="icon" href="data:,">
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<title>Fair Split </title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%230e0d10'/><path d='M18 14h20a4 4 0 0 1 4 4v36l-6-4-6 4-6-4-6 4V18a4 4 0 0 1 4-4z' fill='none' stroke='%23e8a23a' stroke-width='3' stroke-linejoin='round'/><line x1='22' y1='24' x2='38' y2='24' stroke='%23e8a23a' stroke-width='2.5' stroke-linecap='round'/><line x1='22' y1='32' x2='38' y2='32' stroke='%23e8a23a' stroke-width='2.5' stroke-linecap='round'/><line x1='22' y1='40' x2='32' y2='40' stroke='%23e8a23a' stroke-width='2.5' stroke-linecap='round'/></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,500;0,600;1,500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root{
     --bg:#0e0d10; --bg2:#16151a; --ink:#ece8df; --dim:#98938a;
@@ -19,121 +19,217 @@
     background:var(--bg); color:var(--ink);
     font-family:'Inter',system-ui,sans-serif; font-size:15px; line-height:1.55;
     -webkit-font-smoothing:antialiased; min-height:100vh;
+    position:relative; overflow-x:hidden;
   }
-  .shell{max-width:980px; margin:0 auto; padding:48px 24px 80px}
-  .brand{display:flex; align-items:baseline; gap:14px; margin-bottom:40px}
+  /* warm radial glows so the page never feels empty */
+  body::before{
+    content:''; position:fixed; inset:0; z-index:0; pointer-events:none;
+    background:
+      radial-gradient(900px 700px at 85% -5%, rgba(232,162,58,0.10), transparent 55%),
+      radial-gradient(700px 600px at -10% 15%, rgba(232,162,58,0.06), transparent 60%),
+      radial-gradient(800px 600px at 50% 110%, rgba(232,162,58,0.07), transparent 55%);
+  }
+  /* faint paper grain — pure CSS, no image */
+  body::after{
+    content:''; position:fixed; inset:0; z-index:0; pointer-events:none; opacity:0.035;
+    background-image:
+      repeating-linear-gradient(0deg, rgba(255,255,255,0.4) 0 1px, transparent 1px 3px),
+      repeating-linear-gradient(90deg, rgba(255,255,255,0.4) 0 1px, transparent 1px 3px);
+    mix-blend-mode:overlay;
+  }
+  .shell{max-width:980px; margin:0 auto; padding:48px 24px 80px; position:relative; z-index:1}
+
+  /* decorative artwork floating behind the hero */
+  .art{
+    position:absolute; pointer-events:none; opacity:0.18;
+    color:var(--acc);
+  }
+  .art-coffee{top:60px; right:-30px; width:280px}
+  .art-bill{top:380px; left:-90px; width:240px; opacity:0.12; transform:rotate(-8deg)}
+  .art-coin{top:140px; right:240px; width:50px; opacity:0.22}
+  @media(max-width:760px){
+    .art-coffee{width:160px; opacity:0.12}
+    .art-bill, .art-coin{display:none}
+  }
+
+  .brand{display:flex; align-items:baseline; gap:14px; margin-bottom:48px}
   .logo{font-family:'Fraunces',serif; font-weight:600; font-size:26px; letter-spacing:-0.02em}
   .logo .dot{color:var(--acc)}
   .tag{font-size:13px; color:var(--dim); border-left:1px solid var(--line); padding-left:12px}
   .tag b{color:var(--acc); font-weight:500}
-  h1{font-family:'Fraunces',serif; font-weight:500; font-size:clamp(32px,5vw,48px);
-     line-height:1.05; letter-spacing:-0.025em; margin:0 0 14px}
-  h1 em{font-style:italic; color:var(--acc); font-weight:500}
-  .lede{font-size:16px; color:var(--dim); max-width:56ch; margin:0 0 44px}
 
-  .form{display:grid; gap:24px; grid-template-columns:1fr}
-  @media(min-width:760px){.form{grid-template-columns:1fr 1fr}}
-  .field label{display:block; font-size:12px; text-transform:uppercase;
-    letter-spacing:0.12em; color:var(--dim); margin-bottom:10px}
+  h1{font-family:'Fraunces',serif; font-weight:500; font-size:clamp(34px,5.5vw,52px);
+     line-height:1.04; letter-spacing:-0.025em; margin:0 0 18px; max-width:18ch}
+  h1 em{font-style:italic; color:var(--acc); font-weight:500}
+  .lede{font-size:16px; color:var(--dim); max-width:52ch; margin:0 0 48px}
+  .lede b{color:var(--ink); font-weight:500}
+
+  .form{display:grid; gap:28px; grid-template-columns:1fr; align-items:start}
+  @media(min-width:760px){.form{grid-template-columns:5fr 6fr; gap:32px}}
+
+  .field label{display:block; font-size:11px; text-transform:uppercase;
+    letter-spacing:0.14em; color:var(--dim); margin-bottom:10px}
   .field label .req{color:var(--acc)}
   .drop{
     position:relative; border:1px dashed var(--line); border-radius:14px;
     background:var(--bg2); aspect-ratio:4/3; cursor:pointer; overflow:hidden;
     display:flex; align-items:center; justify-content:center;
     background-size:cover; background-position:center;
+    transition:border-color .15s, background-color .15s;
   }
-  .drop:hover{border-color:var(--acc)}
+  .drop:hover{border-color:var(--acc); background-color:#1a181f}
   .drop input{position:absolute; inset:0; opacity:0; cursor:pointer; z-index:5}
-  .drop .ph{text-align:center; color:var(--dim); font-size:14px; padding:20px;
-    background:rgba(14,13,16,0.6); border-radius:10px; pointer-events:none}
+  .drop .ph{text-align:center; color:var(--dim); font-size:14px; padding:24px;
+    pointer-events:none}
+  .drop .ph svg{display:block; margin:0 auto 10px; opacity:.7}
+  .drop .ph small{display:block; margin-top:6px; font-size:11px; opacity:.7}
   .drop.has-img .ph{display:none}
   textarea{
     width:100%; min-height:240px; resize:vertical;
     background:var(--bg2); color:var(--ink);
     border:1px solid var(--line); border-radius:14px;
-    padding:16px 18px; font-family:inherit; font-size:15px; line-height:1.55;
+    padding:18px 20px; font-family:inherit; font-size:15px; line-height:1.55;
+    transition:border-color .15s;
   }
   textarea:focus{outline:none; border-color:var(--acc)}
   textarea::placeholder{color:#5b5660; font-style:italic}
-  .hint{margin-top:8px; font-size:12px; color:var(--dim)}
+  .hint{margin-top:10px; font-size:12px; color:var(--dim)}
 
-  .actions{margin-top:28px; display:flex; align-items:center; gap:16px}
+  .actions{margin-top:32px; display:flex; align-items:center; gap:18px}
   button.go{
     background:var(--acc); color:#1a1206; border:0;
-    padding:14px 28px; border-radius:999px;
+    padding:14px 30px; border-radius:999px;
     font-weight:600; font-size:15px; cursor:pointer;
-    box-shadow:0 8px 24px -8px rgba(232,162,58,.5);
+    box-shadow:0 10px 28px -10px rgba(232,162,58,.55);
+    transition:transform .08s, background .15s;
   }
-  button.go:hover{background:#f0b04e}
-  button.go:disabled{background:var(--line); color:var(--dim); cursor:not-allowed; box-shadow:none}
+  button.go:hover{background:#f0b04e; transform:translateY(-1px)}
+  button.go:disabled{background:var(--line); color:var(--dim); cursor:not-allowed; box-shadow:none; transform:none}
   .stat{font-size:13px; color:var(--dim)}
   .stat.err{color:var(--bad)}
+  .stat .spin{display:inline-block; width:11px; height:11px; vertical-align:-1px;
+    border:2px solid var(--acc); border-top-color:transparent; border-radius:50%;
+    margin-right:8px; animation:spin 0.7s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
 
   .receipt{
-    margin-top:56px; background:var(--paper); color:var(--pink);
-    border-radius:14px; padding:32px 36px;
-    box-shadow:0 30px 60px -25px rgba(0,0,0,.55), 0 8px 20px -8px rgba(0,0,0,.35);
+    margin-top:64px; background:var(--paper); color:var(--pink);
+    border-radius:14px; padding:36px 40px 40px;
+    box-shadow:0 40px 80px -30px rgba(0,0,0,.6), 0 10px 24px -10px rgba(0,0,0,.4);
+    position:relative;
   }
-  .receipt h2{font-family:'Fraunces',serif; font-weight:500; font-size:22px; margin:0 0 4px}
-  .receipt .sub{font-size:12px; color:#6b665d; letter-spacing:0.08em;
-    text-transform:uppercase; margin-bottom:20px}
+  /* paper tear at top */
+  .receipt::before{
+    content:''; position:absolute; top:-6px; left:0; right:0; height:6px;
+    background:
+      radial-gradient(circle at 6px 6px, var(--paper) 5px, transparent 6px) repeat-x;
+    background-size:12px 12px;
+  }
+  .receipt h2{font-family:'Fraunces',serif; font-weight:500; font-size:24px; margin:0 0 4px; letter-spacing:-0.01em}
+  .receipt .sub{font-size:11px; color:#6b665d; letter-spacing:0.12em;
+    text-transform:uppercase; margin-bottom:18px}
   .badge{display:inline-flex; align-items:center; gap:6px;
-    padding:5px 12px; border-radius:999px; font-size:12px; font-weight:500; margin-bottom:20px}
+    padding:6px 14px; border-radius:999px; font-size:12px; font-weight:500; margin-bottom:22px}
   .badge.ok{background:rgba(110,194,139,0.22); color:#2d6b46}
   .badge.bad{background:rgba(227,107,107,0.22); color:#8a2424}
-  table.ppl{width:100%; border-collapse:collapse; margin-bottom:20px; font-size:14px}
-  table.ppl th, table.ppl td{padding:10px 6px; text-align:right; border-bottom:1px dashed var(--pline)}
-  table.ppl th{font-weight:500; color:#6b665d; font-size:11px;
-    text-transform:uppercase; letter-spacing:0.1em; border-bottom:1px solid var(--pink)}
+
+  table.ppl{width:100%; border-collapse:collapse; margin-bottom:22px; font-size:14px}
+  table.ppl th, table.ppl td{padding:11px 8px; text-align:right; border-bottom:1px dashed var(--pline)}
+  table.ppl th{font-weight:500; color:#6b665d; font-size:10px;
+    text-transform:uppercase; letter-spacing:0.12em; border-bottom:1.5px solid var(--pink)}
   table.ppl th:first-child, table.ppl td:first-child{text-align:left}
-  table.ppl td.nm{font-family:'Fraunces',serif; font-size:16px; font-weight:500}
-  table.ppl td.it{font-size:11px; color:#6b665d}
-  table.ppl td.tot{font-weight:600}
+  table.ppl th:nth-child(2), table.ppl td:nth-child(2){text-align:left}
+  table.ppl td.nm{font-family:'Fraunces',serif; font-size:17px; font-weight:500}
+  table.ppl td.it{font-size:11px; color:#6b665d; max-width:260px}
+  table.ppl td.tot{font-weight:600; font-size:15px}
   td.num, td.tot{font-variant-numeric:tabular-nums}
+
   .grand{display:flex; justify-content:space-between; align-items:baseline;
-    padding-top:14px; border-top:2px solid var(--pink); margin-bottom:20px}
-  .grand .lb{font-family:'Fraunces',serif; font-size:17px; font-weight:500}
-  .grand .am{font-family:'Fraunces',serif; font-size:26px; font-weight:600; font-variant-numeric:tabular-nums}
-  .settle{margin:20px 0; padding:18px 0;
+    padding:16px 0 0; border-top:2px solid var(--pink); margin-bottom:24px}
+  .grand .lb{font-family:'Fraunces',serif; font-size:18px; font-weight:500}
+  .grand .am{font-family:'Fraunces',serif; font-size:30px; font-weight:600; font-variant-numeric:tabular-nums}
+
+  .settle{margin:24px 0; padding:20px 0;
     border-top:1px dashed var(--pline); border-bottom:1px dashed var(--pline)}
-  .settle h3{font-family:'Fraunces',serif; font-size:12px;
-    text-transform:uppercase; letter-spacing:0.12em; color:#6b665d;
-    margin:0 0 12px; font-weight:500}
-  .settle ul{list-style:none; padding:0; margin:0; display:grid; gap:8px}
-  .settle li{display:flex; align-items:center; gap:12px; font-size:14px; font-variant-numeric:tabular-nums}
-  .settle .who{font-family:'Fraunces',serif; font-weight:500; min-width:80px}
-  .settle .ar{flex:1; height:1px; background:var(--pink); opacity:.35}
-  .settle .am{font-weight:600; color:var(--acc2); min-width:80px; text-align:right}
+  .settle h3{font-family:'Fraunces',serif; font-size:11px;
+    text-transform:uppercase; letter-spacing:0.14em; color:#6b665d;
+    margin:0 0 14px; font-weight:500}
+  .settle ul{list-style:none; padding:0; margin:0; display:grid; gap:10px}
+  .settle li{display:flex; align-items:center; gap:14px; font-size:14px; font-variant-numeric:tabular-nums}
+  .settle .who{font-family:'Fraunces',serif; font-weight:500; min-width:90px}
+  .settle .ar{flex:1; height:1px; background:var(--pink); opacity:.35; position:relative}
+  .settle .ar::after{content:''; position:absolute; right:-1px; top:-3px; width:6px; height:6px;
+    border-top:1.5px solid var(--pink); border-right:1.5px solid var(--pink); transform:rotate(45deg)}
+  .settle .am{font-weight:600; color:var(--acc2); min-width:90px; text-align:right}
   .settle .empty{font-size:13px; color:#6b665d; font-style:italic}
+
   .notes{display:grid; gap:14px}
-  .nbx h3{font-size:11px; text-transform:uppercase; letter-spacing:0.12em;
-    margin:0 0 6px; color:#6b665d; font-weight:600}
+  .nbx h3{font-size:10px; text-transform:uppercase; letter-spacing:0.14em;
+    margin:0 0 8px; color:#6b665d; font-weight:600}
   .nbx ul{list-style:none; padding:0; margin:0}
-  .nbx li{padding:8px 12px; border-radius:8px; font-size:13px; margin-bottom:6px}
+  .nbx li{padding:9px 12px; border-radius:8px; font-size:13px; margin-bottom:6px; line-height:1.45}
   .nbx.as li{background:rgba(214,205,184,0.55); color:#4d4839}
-  .nbx.fl li{background:rgba(227,107,107,0.14); color:#7a2424;
-    border-left:3px solid var(--bad)}
-  .foot{margin-top:48px; padding-top:18px; border-top:1px solid var(--line);
-    display:flex; justify-content:space-between; color:var(--dim); font-size:12px}
+  .nbx.fl li{background:rgba(227,107,107,0.14); color:#7a2424; border-left:3px solid var(--bad)}
+
+  .foot{margin-top:56px; padding-top:20px; border-top:1px solid var(--line);
+    display:flex; justify-content:space-between; color:var(--dim); font-size:12px; flex-wrap:wrap; gap:8px}
   .foot a{color:var(--dim); text-decoration:none; border-bottom:1px dotted var(--line)}
-  .foot a:hover{color:var(--acc)}
+  .foot a:hover{color:var(--acc); border-bottom-color:var(--acc)}
 </style>
 </head>
 <body>
+
+<!-- =================== background art =================== -->
+<svg class="art art-coffee" viewBox="0 0 200 200" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+  <path d="M40 60 h100 v60 a40 40 0 0 1 -40 40 H80 a40 40 0 0 1 -40 -40 z"/>
+  <path d="M140 75 h15 a18 18 0 0 1 0 36 h-15"/>
+  <path d="M65 30 q5 -10 0 -20"/>
+  <path d="M85 30 q5 -10 0 -20"/>
+  <path d="M105 30 q5 -10 0 -20"/>
+  <ellipse cx="90" cy="170" rx="60" ry="6"/>
+</svg>
+
+<svg class="art art-bill" viewBox="0 0 180 240" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true">
+  <path d="M30 20 h120 v200 l-15 -10 l-15 10 l-15 -10 l-15 10 l-15 -10 l-15 10 l-15 -10 l-15 10 z"/>
+  <line x1="50" y1="50" x2="130" y2="50"/>
+  <line x1="50" y1="70" x2="110" y2="70"/>
+  <line x1="50" y1="100" x2="130" y2="100"/>
+  <line x1="50" y1="120" x2="100" y2="120"/>
+  <line x1="50" y1="140" x2="125" y2="140"/>
+  <line x1="50" y1="170" x2="130" y2="170" stroke-dasharray="2 3"/>
+  <line x1="50" y1="190" x2="130" y2="190"/>
+</svg>
+
+<svg class="art art-coin" viewBox="0 0 60 60" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+  <circle cx="30" cy="30" r="22"/>
+  <circle cx="30" cy="30" r="16" stroke-dasharray="2 3"/>
+  <text x="30" y="36" text-anchor="middle" font-family="Fraunces, serif" font-size="18" fill="currentColor" stroke="none">₹</text>
+</svg>
+
+<!-- =================== content =================== -->
 <div class="shell">
   <div class="brand">
     <div class="logo">fair<span class="dot">.</span>split</div>
     <div class="tag">receipt + who had what &mdash; <b>reconciled to the rupee</b></div>
   </div>
-  <h1>Split the bill <em>fairly</em>,<br>not approximately.</h1>
-  <p class="lede">Upload a restaurant bill. Tell us who had what. We extract line items with Gemini, then do the math in Python so every paisa is accounted for &mdash; and we flag anything that doesn't add up.</p>
+
+  <h1>Split the bill <em>fairly</em>, not approximately.</h1>
+  <p class="lede">Upload a restaurant bill. Tell us who had what. We extract line items with Gemini, then <b>do the math in Python</b> so every paisa is accounted for &mdash; and we flag anything that doesn't add up.</p>
 
   <div class="form">
     <div class="field">
       <label>Receipt photo <span class="req">*</span></label>
       <div class="drop" id="drop">
         <input type="file" id="file" accept="image/*">
-        <div class="ph" id="ph">Drop an image or click to upload<br><span style="font-size:11px;opacity:.7">JPG, PNG, WebP</span></div>
+        <div class="ph" id="ph">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2"/>
+            <circle cx="9" cy="10" r="2"/>
+            <path d="M21 16l-4.5-4.5L8 19"/>
+          </svg>
+          Drop an image or click to upload
+          <small>JPG, PNG, WebP</small>
+        </div>
       </div>
     </div>
     <div class="field">
@@ -152,7 +248,7 @@
 
   <div class="foot">
     <div>arithmetic in code &middot; LLM only extracts &middot; flags &gt; silent fixes</div>
-    <a href="https://github.com/sahaj645/receipt-settlement-engine" target="_blank">source on github</a>
+    <a href="https://github.com/sahaj645/receipt-settlement-engine" target="_blank" rel="noopener">source on github</a>
   </div>
 </div>
 
@@ -165,14 +261,17 @@ var go = document.getElementById('go');
 var stat = document.getElementById('stat');
 var out = document.getElementById('out');
 
-function setStat(m, err){ stat.textContent = m || ''; stat.className = 'stat' + (err ? ' err' : ''); }
+function setStat(m, err, busy){
+  stat.innerHTML = (busy ? '<span class="spin"></span>' : '') + (m || '');
+  stat.className = 'stat' + (err ? ' err' : '');
+}
 function refresh(){ go.disabled = !(imageB64 && desc.value.trim()); }
 function esc(s){
   return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
     return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
   });
 }
-function rs(n){ return 'Rs.' + Number(n || 0).toLocaleString('en-IN'); }
+function rs(n){ return '₹' + Number(n || 0).toLocaleString('en-IN'); }
 
 fileInput.addEventListener('change', function(e){
   var f = e.target.files && e.target.files[0];
@@ -193,7 +292,7 @@ desc.addEventListener('input', refresh);
 go.addEventListener('click', function(){
   go.disabled = true;
   out.innerHTML = '';
-  setStat('Asking Gemini to read your bill...');
+  setStat('Asking Gemini to read your bill...', false, true);
   var t0 = Date.now();
   fetch('/split', {
     method: 'POST',
@@ -220,7 +319,7 @@ function render(d){
 
     var rows = '';
     (d.per_person || []).forEach(function(p){
-      var disc = p.discount_share < 0 ? '-' + rs(Math.abs(p.discount_share)) : rs(p.discount_share);
+      var disc = p.discount_share < 0 ? '−' + rs(Math.abs(p.discount_share)) : rs(p.discount_share);
       var items = (p.items || []).map(esc).join(' &middot; ') || '<em>&mdash;</em>';
       rows += '<tr>'
         + '<td class="nm">' + esc(p.name) + '</td>'
@@ -273,7 +372,7 @@ function render(d){
       + '<div class="notes">' + notes + '</div>'
       + '</div>';
   } catch (e) {
-    out.innerHTML = '<div style="background:#3a1a1a;color:#ffb4b4;padding:16px;border-radius:8px;margin-top:24px;font-family:monospace;font-size:12px">RENDER ERROR: ' + esc(e.message) + '<br>Raw: <pre>' + esc(JSON.stringify(d, null, 2)) + '</pre></div>';
+    out.innerHTML = '<div style="background:#3a1a1a;color:#ffb4b4;padding:16px;border-radius:8px;margin-top:24px;font-family:monospace;font-size:12px">RENDER ERROR: ' + esc(e.message) + '</div>';
   }
 }
 </script>
